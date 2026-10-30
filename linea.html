@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Line chart · Temperatura global</title>
+<style>
+:root{
+  color-scheme: light;
+  --surface:#fcfcfb; --page:#f4f3f0; --ink:#0b0b0b; --ink2:#52514e; --muted:#8a8984;
+  --grid:#e4e3df; --axis:#b9b8b2; --s1:#2a78d6; --s1soft:#9ec5f4; --accent:#e34948;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:32px 16px 48px}
+.kicker{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin:0 0 6px}
+h1{font-size:clamp(24px,4vw,34px);line-height:1.15;margin:0 0 10px;font-weight:700;letter-spacing:-.01em}
+.lede{color:var(--ink2);max-width:62ch;margin:0 0 22px}
+.card{background:var(--surface);border:1px solid var(--grid);border-radius:12px;padding:20px 16px 12px}
+.legend{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;color:var(--ink2);margin:0 0 6px 4px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{width:22px;height:0;border-top:2px solid var(--s1soft)}
+.sw.b{border-top:3px solid var(--s1)}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.tick text{fill:var(--muted);font-size:12px}
+.tick line{stroke:var(--grid)}
+.domain{display:none}
+.zero{stroke:var(--axis);stroke-width:1}
+.ann{font-size:12.5px;fill:var(--ink2)}
+.ann strong,.annb{font-weight:700;fill:var(--ink)}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;font-size:13px;padding:8px 10px;border-radius:8px;opacity:0;transition:opacity .1s;white-space:nowrap}
+#tip b{font-size:15px}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:22px;font-size:14px;color:var(--ink2)}
+.notes h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink);margin:0 0 4px}
+.notes p{margin:0}
+a{color:var(--s1)}
+footer{margin-top:26px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <p class="kicker">PEC2 · Técnica 1 · Line chart</p>
+  <h1>El planeta lleva 49 años seguidos más cálido que la media de 1951–1980</h1>
+  <p class="lede">Anomalía de la temperatura media global (tierra + océano) respecto a la media 1951–1980, de 1880 a 2025. La línea gruesa suaviza la variabilidad interanual con una media móvil de 10 años.</p>
+
+  <div class="card">
+    <div class="legend">
+      <span><i class="sw"></i>Anomalía anual</span>
+      <span><i class="sw b"></i>Media móvil 10 años</span>
+    </div>
+    <svg id="chart" viewBox="0 0 940 440" role="img" aria-label="Gráfico de líneas de la anomalía de temperatura global 1880-2025"></svg>
+  </div>
+
+  <div class="notes">
+    <div><h2>Qué se representa</h2><p>Una serie temporal continua de 146 valores anuales (variable cuantitativa) sobre un eje temporal ordenado.</p></div>
+    <div><h2>Insight</h2><p>Hasta 1976 la serie está por debajo o cerca de cero; desde 1980 sube de forma casi lineal y se acelera: 2024 marca el récord (+1,28 °C).</p></div>
+    <div><h2>Audiencia</h2><p>Público general y estudiantes: una sola línea, un mensaje y una referencia (el cero) fácil de entender.</p></div>
+  </div>
+
+  <footer>Fuente: NASA GISS, <a href="https://data.giss.nasa.gov/gistemp/" target="_blank" rel="noopener">GISTEMP v4</a> (serie Land-Ocean, columna J-D). Elaboración propia con D3.js · Samuel Gazabón · Visualización de Datos, UOC.</footer>
+</main>
+<div id="tip"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+const raw = [[1880,-0.17],[1881,-0.09],[1882,-0.11],[1883,-0.18],[1884,-0.28],[1885,-0.33],[1886,-0.31],[1887,-0.36],[1888,-0.18],[1889,-0.11],[1890,-0.36],[1891,-0.22],[1892,-0.27],[1893,-0.31],[1894,-0.3],[1895,-0.23],[1896,-0.11],[1897,-0.11],[1898,-0.28],[1899,-0.18],[1900,-0.08],[1901,-0.16],[1902,-0.28],[1903,-0.37],[1904,-0.47],[1905,-0.26],[1906,-0.22],[1907,-0.38],[1908,-0.42],[1909,-0.48],[1910,-0.44],[1911,-0.44],[1912,-0.37],[1913,-0.34],[1914,-0.15],[1915,-0.14],[1916,-0.36],[1917,-0.46],[1918,-0.3],[1919,-0.27],[1920,-0.27],[1921,-0.18],[1922,-0.28],[1923,-0.26],[1924,-0.27],[1925,-0.22],[1926,-0.11],[1927,-0.22],[1928,-0.2],[1929,-0.36],[1930,-0.15],[1931,-0.09],[1932,-0.16],[1933,-0.28],[1934,-0.13],[1935,-0.2],[1936,-0.15],[1937,-0.03],[1938,0.0],[1939,-0.02],[1940,0.12],[1941,0.18],[1942,0.06],[1943,0.09],[1944,0.2],[1945,0.09],[1946,-0.07],[1947,-0.03],[1948,-0.11],[1949,-0.11],[1950,-0.17],[1951,-0.07],[1952,0.01],[1953,0.08],[1954,-0.13],[1955,-0.14],[1956,-0.19],[1957,0.05],[1958,0.06],[1959,0.03],[1960,-0.02],[1961,0.06],[1962,0.03],[1963,0.05],[1964,-0.2],[1965,-0.11],[1966,-0.06],[1967,-0.02],[1968,-0.08],[1969,0.05],[1970,0.03],[1971,-0.08],[1972,0.01],[1973,0.16],[1974,-0.07],[1975,-0.01],[1976,-0.1],[1977,0.18],[1978,0.07],[1979,0.16],[1980,0.26],[1981,0.32],[1982,0.14],[1983,0.31],[1984,0.16],[1985,0.12],[1986,0.18],[1987,0.32],[1988,0.39],[1989,0.27],[1990,0.45],[1991,0.41],[1992,0.22],[1993,0.23],[1994,0.31],[1995,0.45],[1996,0.33],[1997,0.47],[1998,0.61],[1999,0.38],[2000,0.39],[2001,0.53],[2002,0.63],[2003,0.62],[2004,0.53],[2005,0.68],[2006,0.64],[2007,0.66],[2008,0.54],[2009,0.66],[2010,0.72],[2011,0.61],[2012,0.65],[2013,0.67],[2014,0.75],[2015,0.89],[2016,1.01],[2017,0.91],[2018,0.85],[2019,0.98],[2020,1.01],[2021,0.85],[2022,0.89],[2023,1.17],[2024,1.28],[2025,1.18]];
+const data = raw.map(([y,v])=>({y,v}));
+data.forEach((d,i)=>{ if(i>=9){ let s=0; for(let k=i-9;k<=i;k++) s+=data[k].v; d.ma=s/10; } });
+const W=940,H=440,m={t:20,r:70,b:34,l:44};
+const svg=d3.select('#chart');
+const x=d3.scaleLinear().domain([1880,2025]).range([m.l,W-m.r]);
+const y=d3.scaleLinear().domain([-0.6,1.4]).range([H-m.b,m.t]);
+svg.append('g').attr('class','tick-y').attr('transform',`translate(${m.l},0)`)
+  .call(d3.axisLeft(y).ticks(5).tickSize(-(W-m.l-m.r)).tickFormat(d=>(d>0?'+':'')+d3.format('.1f')(d).replace('.',',')+'°'))
+  .call(g=>g.selectAll('.tick').attr('class','tick'));
+svg.append('g').attr('transform',`translate(0,${H-m.b})`)
+  .call(d3.axisBottom(x).tickValues([1880,1900,1920,1940,1960,1980,2000,2020]).tickFormat(d3.format('d')).tickSize(0).tickPadding(10))
+  .call(g=>g.selectAll('.tick').attr('class','tick'));
+svg.append('line').attr('class','zero').attr('x1',m.l).attr('x2',W-m.r).attr('y1',y(0)).attr('y2',y(0));
+svg.append('text').attr('class','ann').attr('x',m.l+6).attr('y',y(0)-6).text('Media 1951–1980');
+svg.append('path').datum(data).attr('fill','none').attr('stroke','var(--s1soft)').attr('stroke-width',2)
+  .attr('d',d3.line().x(d=>x(d.y)).y(d=>y(d.v)));
+svg.append('path').datum(data.filter(d=>d.ma!=null)).attr('fill','none').attr('stroke','var(--s1)').attr('stroke-width',3).attr('stroke-linejoin','round')
+  .attr('d',d3.line().curve(d3.curveMonotoneX).x(d=>x(d.y)).y(d=>y(d.ma)));
+// annotations
+const rec=data.find(d=>d.y===2024);
+svg.append('circle').attr('cx',x(2024)).attr('cy',y(rec.v)).attr('r',5).attr('fill','var(--s1)').attr('stroke','var(--surface)').attr('stroke-width',2);
+const a1=svg.append('text').attr('class','ann').attr('x',x(2024)-10).attr('y',y(rec.v)-14).attr('text-anchor','end');
+a1.append('tspan').attr('class','annb').text('2024: +1,28 °C');
+a1.append('tspan').text('  récord de la serie');
+const y76=data.find(d=>d.y===1976);
+svg.append('circle').attr('cx',x(1976)).attr('cy',y(y76.v)).attr('r',4).attr('fill','var(--surface)').attr('stroke','var(--ink2)').attr('stroke-width',1.5);
+const a2=svg.append('text').attr('class','ann').attr('x',x(1976)).attr('y',y(y76.v)+24).attr('text-anchor','middle');
+a2.append('tspan').attr('class','annb').text('1976');
+a2.append('tspan').text(': último año por debajo de la media');
+const last=data[data.length-1];
+svg.append('text').attr('class','ann').attr('x',x(2025)+8).attr('y',y(last.ma)+4).text('+'+d3.format('.2f')(last.ma).replace('.',',')+'°').append('tspan').attr('x',x(2025)+8).attr('dy',15).text('(10 años)');
+// hover
+const tip=d3.select('#tip');
+const cross=svg.append('line').attr('stroke','var(--axis)').attr('y1',m.t).attr('y2',H-m.b).style('opacity',0);
+const dot=svg.append('circle').attr('r',5).attr('fill','var(--s1)').attr('stroke','var(--surface)').attr('stroke-width',2).style('opacity',0);
+svg.append('rect').attr('x',m.l).attr('y',m.t).attr('width',W-m.l-m.r).attr('height',H-m.t-m.b).attr('fill','transparent')
+ .on('pointermove',function(e){
+   const [px]=d3.pointer(e,this); const yr=Math.round(x.invert(px)); const d=data.find(q=>q.y===yr); if(!d) return;
+   cross.attr('x1',x(yr)).attr('x2',x(yr)).style('opacity',1);
+   dot.attr('cx',x(yr)).attr('cy',y(d.v)).style('opacity',1);
+   const f=v=>(v>0?'+':'')+d3.format('.2f')(v).replace('.',',')+' °C';
+   tip.html(`<b>${yr}</b><br>Anomalía: ${f(d.v)}`+(d.ma!=null?`<br>Media 10 años: ${f(d.ma)}`:''))
+      .style('opacity',1).style('left',Math.min(e.clientX+14,window.innerWidth-190)+'px').style('top',(e.clientY-60)+'px');
+ })
+ .on('pointerleave',()=>{tip.style('opacity',0);cross.style('opacity',0);dot.style('opacity',0)});
+</script>
+</body>
+</html>
